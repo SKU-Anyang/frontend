@@ -1,12 +1,10 @@
-import Header from "./assets/components/Header.jsx";
-import Footer from "./assets/components/Footer";
+import Main_Header from "./assets/components/main_Header.jsx";
 
 export default function App() {
   return (
     <div className="min-h-screen flex flex-col bg-white">
-      <Header />
-      <main className="flex-1" />
-      <Footer />
+      <Main_Header />
+
     </div>
   );
 }

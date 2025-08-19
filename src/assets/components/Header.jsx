@@ -44,7 +44,6 @@ export default function Header() {
         </nav>
       </div>
 
-      {/* 하단선 */}
       <div className="w-full h-px bg-gray-200"></div>
     </header>
   );
