@@ -1,6 +1,5 @@
 import { NavLink, useNavigate } from "react-router-dom";
 
-// 메뉴(클릭 시 이동할 페이지 경로 써주세요~)
 const MenuName = [
   { label: "아이디어/시장성 진단", path: "/idea" },
   { label: "비즈니스 설계/리스크 진단", path: "/business" },
@@ -13,17 +12,18 @@ export default function Header() {
   const navigate = useNavigate();
 
   return (
-    <header className="bg-white shadow w-full">
-      <div className="relative flex items-center justify-center px-8 py-10">
+    <header className="w-full absolute top-0 left-0 right-0 z-50">
+      <div className="relative flex items-center justify-center px-8 py-10 bg-transparent">
         {/* 왼쪽 화살표 클릭 -> 메인("/") */}
         <button
           onClick={() => navigate("/")}
           className="absolute left-0 ml-12"
+          aria-label="뒤로가기"
         >
           <img src="/arrow_left.png" alt="뒤로가기" className="w-7 h-7" />
         </button>
 
-        {/* 메뉴 목록 */}
+        {/* 메뉴 */}
         <nav className="w-[70%] mx-auto">
           <ul className="flex items-center justify-between text-xl md:text-2xl">
             {MenuName.map((menu) => (
@@ -32,8 +32,8 @@ export default function Header() {
                   to={menu.path}
                   className={({ isActive }) =>
                     isActive
-                      ? "px-3 md:px-4 py-2 font-black text-black"  //선택된 메뉴가 눈에 잘 안 띄는것 같아요,, text-black이 tailwind 최댓값이라고해서 우선 요걸로 했습니다,,
-                      : "px-3 md:px-4 py-2 text-gray-600 hover:text-gray-900"
+                      ? "px-3 md:px-4 py-2 font-black text-black"
+                      : "px-3 md:px-4 py-2 text-gray-600 hover:text-gray-900 hover:font-bold"
                   }
                 >
                   {menu.label}
@@ -44,7 +44,7 @@ export default function Header() {
         </nav>
       </div>
 
-      <div className="w-full h-px bg-gray-200"></div>
+      <div className="w-full h-px bg-[#A2A1A1]" />
     </header>
   );
 }
