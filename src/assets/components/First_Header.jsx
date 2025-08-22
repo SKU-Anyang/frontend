@@ -1,4 +1,4 @@
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink, Link, useNavigate } from "react-router-dom";
 
 const MenuName = [
   { label: "아이디어/시장성 진단", path: "/idea" },
@@ -12,14 +12,13 @@ export default function First_Header() {
   const navigate = useNavigate();
 
   return (
-    <header className="absolute top-0 left-0 w-full border-b border-gray-300 shadow-sm z-50">
-
+    <header className="absolute top-0 left-0 w-full z-50 border-b border-gray-300 shadow-sm backdrop-blur">
       <div className="flex items-center justify-between px-20 py-8">
-        {/* 왼쪽 로고 */}
+        {/* 로고 */}
         <div className="shrink-0">
-          <button onClick={() => navigate("/")}>
+          <Link to="/">
             <img src="/logo_black.png" alt="로고" className="w-48 h-auto" />
-          </button>
+          </Link>
         </div>
 
         {/* 메뉴 */}
@@ -42,18 +41,17 @@ export default function First_Header() {
           </ul>
         </nav>
 
-
         {/* 오른쪽 (프로필, 로그인 버튼) */}
         <div className="flex items-center gap-10 shrink-0">
-          <button onClick={() => navigate("/MyPage")}>
+          <Link to="/mypage" aria-label="마이페이지">
             <img
               src="/Profile.png"
               alt="프로필"
               className="w-14 h-14 rounded-full"
             />
-          </button>
+          </Link>
           <button
-            onClick={() => navigate("/Login")}
+            onClick={() => navigate("/login")}
             className="rounded-full bg-[#7895CB] px-8 py-4 text-xl font-bold text-white shadow-lg hover:opacity-95 active:translate-y-[1px]"
           >
             LOGIN
@@ -61,7 +59,7 @@ export default function First_Header() {
         </div>
       </div>
 
-      {/* 하단 */}
+      {/* 하단선 */}
       <div className="w-full h-px bg-gray-300" />
     </header>
   );

@@ -4,12 +4,12 @@ export default function Main_Header() {
   return (
     <header className="w-full absolute top-0 left-0 right-0 z-50 bg-transparent">
       <div className="flex justify-between items-center h-28 px-20">
-        {/* 왼쪽 로고 */}
+        {/* 로고 */}
         <Link to="/" className="flex items-center">
           <img src="/logo_white.png" alt="로고" className="h-12" />
         </Link>
 
-        {/* 오른쪽 메뉴 */}
+        {/* 오른쪽 */}
         <div className="flex items-center space-x-6 text-xl font-semibold text-white">
           <Link to="/MyPage" className="hover:opacity-90">
             마이페이지
@@ -21,7 +21,7 @@ export default function Main_Header() {
         </div>
       </div>
 
-      {/* 하단 선 */}
+      {/* 하단선 */}
       <div className="w-full h-px bg-white/80" />
     </header>
   );

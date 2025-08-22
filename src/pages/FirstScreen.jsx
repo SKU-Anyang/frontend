@@ -23,7 +23,7 @@ export function Section1() {
         {/* 버튼 → mainscreen으로 이동 */}
         <div className="mt-20">
           <Link
-            to="/mainscreen"
+            to="/"
             className="inline-flex items-center justify-center w-[640px] sm:w-[700px] h-[96px] rounded-3xl text-white text-4xl font-extrabold shadow-xl transition-colors"
             style={{ backgroundColor: "#7895CB" }}
           >
@@ -33,7 +33,7 @@ export function Section1() {
 
         {/* 회원가입 → /signup 이동 */}
         <Link
-          to="/SignUp"
+          to="/signup"
           className="mt-7 text-base sm:text-lg md:text-xl text-slate-500 hover:text-slate-600 underline underline-offset-4"
         >
           회원가입
