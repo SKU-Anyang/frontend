@@ -216,18 +216,7 @@ export default function SimilarStores() {
 
   return (
     <section className="min-h-screen bg-[#F6F8FB]">
-      {/* 상단 네비(간단) */}
-      <div className="sticky top-0 z-10 bg-white/80 backdrop-blur border-b">
-        <div className="mx-auto w-full max-w-7xl px-5 py-3 flex items-center gap-3">
-          <button onClick={() => navigate(-1)} className="text-gray-700 hover:text-black">←</button>
-          <nav className="flex-1 flex items-center justify-center gap-10 text-sm text-gray-500">
-            <span>아이디어/ 시장성 진단</span>
-            <span>비즈니스 설계/ 리스크 진단</span>
-            <span className="font-semibold text-gray-900">유사 점포 분석</span>
-            <span>사장님 B2B 도우미</span>
-          </nav>
-        </div>
-      </div>
+     
 
       {/* 검색창 */}
       <div className="mx-auto w-full max-w-7xl px-5 pt-6">

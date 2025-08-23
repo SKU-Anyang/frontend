@@ -86,14 +86,7 @@ export default function BusinessDesignRisk() {
   return (
     <section className="min-h-screen bg-[#F5F6F8]">
       {/* 상단 얇은 바 + 타이틀 */}
-      <div className="sticky top-0 z-10 bg-white/85 backdrop-blur border-b">
-        <div className="mx-auto w-full max-w-[1200px] px-6 py-3 flex items-center gap-3">
-          <button onClick={() => navigate(-1)} className="text-gray-700 hover:text-black">←</button>
-          <span className="text-sm text-gray-500">아이디어/ 시장성 진단</span>
-          <span className="text-gray-300">|</span>
-          <span className="text-sm font-semibold text-gray-800">비즈니스 설계/ 리스크 진단</span>
-        </div>
-      </div>
+      
 
       {/* 메인 2열 */}
       <div className="mx-auto w-full max-w-[1200px] px-6 py-8 grid grid-cols-1 lg:grid-cols-[420px_1fr] gap-8">

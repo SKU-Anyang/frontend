@@ -87,17 +87,7 @@ export default function MarketInsights() {
   return (
     <section className="min-h-screen bg-[#F6F8FB]">
       {/* 상단 바 */}
-      <div className="sticky top-0 z-10 bg-white/80 backdrop-blur border-b">
-        <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <button onClick={() => navigate(-1)} className="text-sm text-gray-600 hover:text-gray-900">
-              ← 뒤로가기
-            </button>
-            <span className="text-gray-300">|</span>
-            <span className="text-sm text-gray-500">시장성 분석</span>
-          </div>
-        </div>
-      </div>
+
 
       <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 py-8 sm:py-10">
         {/* 헤더 */}

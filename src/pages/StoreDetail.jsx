@@ -72,13 +72,7 @@ export default function StoreDetail() {
 
   return (
     <section className="min-h-screen bg-[#F6F8FB]">
-      {/* 상단 바 */}
-      <div className="sticky top-0 z-10 bg-white/80 backdrop-blur border-b">
-        <div className="mx-auto w-full max-w-5xl px-5 py-3 flex items-center gap-3">
-          <button onClick={() => navigate(-1)} className="text-gray-700 hover:text-black">←</button>
-          <span className="text-sm text-gray-500">유사 점포 분석</span>
-        </div>
-      </div>
+     
 
       <div className="mx-auto w-full max-w-5xl px-5 py-8">
         <div className="bg-white rounded-3xl border shadow-sm p-6">

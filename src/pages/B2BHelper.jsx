@@ -155,18 +155,7 @@ export default function B2BHelper() {
   return (
     <section className="min-h-screen bg-[#F6F8FB] flex flex-col">
       {/* 상단 바(간단) */}
-      <div className="border-b bg-white/80 backdrop-blur">
-        <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 py-3 flex items-center gap-4">
-          <button title="뒤로" className="text-gray-600 hover:text-gray-900">←</button>
-          <nav className="flex-1 flex items-center justify-center gap-10 text-sm text-gray-500">
-            <span>아이디어/ 시장성 진단</span>
-            <span className="font-semibold text-gray-900">사장님 B2B 도우미</span>
-            <span>유사 점포 분석</span>
-            <span>사용자 큐레이션</span>
-          </nav>
-        </div>
-      </div>
-
+    
       {/* 탭 + 날짜 */}
       <div className="mx-auto w-full max-w-4xl px-4 sm:px-6 mt-4">
         <div className="flex items-center justify-center gap-2">
