@@ -112,7 +112,7 @@ export default function MainSection() {
               <FeatureCell
                 img={idea2Img/* 또는 ideaIcon */}
                 text="아이디어/시장성 진단"
-                to="/"/>
+                to="/a"/>
               {/* 2~5) 나머지 항목 */}
               <FeatureCell img={designImg}   text="비즈니스 설계/ 리스크 진단" to="/business-design" />
               <FeatureCell img={analysisImg} text="유사 점포 분석"             to="/similar-stores" />
