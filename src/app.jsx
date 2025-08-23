@@ -1,4 +1,5 @@
 // src/App.jsx
+<<<<<<< HEAD
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import First_Header from "./assets/components/First_Header.jsx";
 import Header from "./assets/components/Header.jsx";   // ← 공통 헤더
@@ -13,8 +14,23 @@ import InfoEdit from "./pages/InfoEdit.jsx";
 export default function App() {
   const { pathname } = useLocation();
   const isHome = pathname === "/";
+=======
+import { Routes, Route } from "react-router-dom";
+>>>>>>> f9d3f48cd1d5919d148d5fc0a19388617cbfff4a
 
+import IdeaRecommend from "./pages/IdeaRecommend.jsx";
+import IdeaResults from "./pages/IdeaResults.jsx";
+import MarketInsights from "./pages/MarketInsights.jsx";
+import BusinessDesignRisk from "./pages/BusinessDesignRisk.jsx";
+import B2BHelper from "./pages/B2BHelper.jsx";
+import SimilarStores from "./pages/SimilarStores.jsx";
+import StoreDetail from "./pages/StoreDetail";
+import MainSection from "./components/MainSection.jsx";
+import UserCuration from "./pages/UserCuration.jsx";
+// import Footer from "./assets/components/Footer.jsx";
+export default function App() {
   return (
+<<<<<<< HEAD
     <div className="min-h-screen flex flex-col bg-white">
       {/* 헤더: 홈이면 First_Header, 아니면 Header */}
       {isHome ? <First_Header /> : <Header />}
@@ -41,5 +57,24 @@ export default function App() {
       {/* Footer는 모든 페이지에 공통 */}
       <Footer />
     </div>
+=======
+    <>
+      <main className="min-h-screen">
+        
+      <Routes>
+        <Route path="/" element={<IdeaRecommend />} />
+        <Route path="main-section" element={<MainSection />} />
+        <Route path="/idea-results" element={<IdeaResults />} />
+        <Route path="/market-insights" element={<MarketInsights />} />
+        <Route path="/business-design" element={<BusinessDesignRisk />} />
+        <Route path="/b2b-helper" element={<B2BHelper/>} />
+        <Route path="/similar-stores" element={<SimilarStores />} />
+        <Route path="/similar-stores/:id" element={<StoreDetail />} />
+        <Route path="/curation" element={<UserCuration />} />
+      </Routes>
+      </main>
+     
+      </>
+>>>>>>> f9d3f48cd1d5919d148d5fc0a19388617cbfff4a
   );
 }
