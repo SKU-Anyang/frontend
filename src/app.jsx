@@ -1,29 +1,25 @@
 // src/App.jsx
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import First_Header from "./assets/components/First_Header.jsx";
-import Back_Header from "./assets/components/Back_Header.jsx";
+import Header from "./assets/components/Header.jsx";   // ← 공통 헤더
 import Footer from "./assets/components/Footer.jsx";
 
 import FirstScreen from "./pages/FirstScreen.jsx";
 import SignUp from "./pages/SignUp.jsx";
-import MyPage from "./pages/MyPage.jsx";
 import Login from "./pages/Login.jsx";
+import MyPage from "./pages/MyPage.jsx";
 import InfoEdit from "./pages/InfoEdit.jsx";
 
 export default function App() {
   const { pathname } = useLocation();
-
-  // 헤더/푸터 조건
-  const showFirstHeader = pathname === "/";
-  const showBackHeader  = pathname === "/mypage" || pathname === "/infoedit";
-  const showFooter      = showFirstHeader || showBackHeader;
+  const isHome = pathname === "/";
 
   return (
     <div className="min-h-screen flex flex-col bg-white">
-      {/* 조건부 해더 */}
-      {showFirstHeader && <First_Header />}
-      {showBackHeader && <Back_Header />}
+      {/* 헤더: 홈이면 First_Header, 아니면 Header */}
+      {isHome ? <First_Header /> : <Header />}
 
+      {/* 본문 (상단 패딩 없음, 헤더는 겹치도록 각 헤더 컴포넌트에서 absolute/fixed 사용) */}
       <main className="flex-1">
         <Routes>
           <Route path="/" element={<FirstScreen />} />
@@ -42,8 +38,8 @@ export default function App() {
         </Routes>
       </main>
 
-      {/* 메인/마이페이지/정보수정에서만 Footer */}
-      {showFooter && <Footer />}
+      {/* Footer는 모든 페이지에 공통 */}
+      <Footer />
     </div>
   );
 }

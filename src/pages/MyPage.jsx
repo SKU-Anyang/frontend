@@ -9,7 +9,7 @@ export default function MyPage() {
   return (
     <div className="bg-[#F9FAFB] min-h-screen pt-50 pb-32">
       <main className="flex items-start">
-        <div className="mx-auto w-full max-w-[1600px] xl:max-w-[1700px] 2xl:max-w-[1800px] space-y-16">
+        <div className="mx-auto w-full max-w-[1600px] xl:max-w-[1700px] 2xl:max-w-[1800px] space-y-16 mt-10 md:mt-16 lg:mt-24">
           
           {/* 상단 프로필 카드 */}
           <div className="bg-white rounded-2xl">

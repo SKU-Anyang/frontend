@@ -21,16 +21,9 @@ export default function Login() {
 
   return (
     <main className="relative bg-[#B0BBCA] min-h-screen flex items-center justify-center px-6 py-32">
-      {/* 왼쪽 상단 로고 */}
-      <img
-        src="/logo_black.png"
-        alt="로고"
-        className="absolute left-10 top-10 w-48 h-auto"
-      />
-
 
       {/* 흰 박스 */}
-      <div className="w-full max-w-[1180px]">
+      <div className="w-full max-w-[1180px] mt-10 md:mt-14 lg:mt-20">
         <div className="bg-white rounded-[40px] shadow-[0_28px_60px_rgba(0,0,0,0.1)] px-24 pt-12 pb-28">
           {/* 로그인+이미지 */}
           <div className="flex items-center gap-6 mb-16">
