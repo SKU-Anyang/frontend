@@ -1,17 +1,20 @@
-import React from "react";
+// src/pages/StoreDetail.jsx
+import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
+import axios from "axios";
+import ReactMarkdown from "react-markdown";
 
-/** 
- * SimilarStores에서 navigate(`/similar-stores/${s.id}`, { state: { store: s } })
- * 로 넘어오면 state에 store가 들어있고,
- * 직접 URL로 접근했을 때(state 없음)는 아래 Fallback 더미로 메워줍니다.
- */
+/** 배포에서 프록시를 쓰면 .env에 VITE_API_BASE="" 두고, 아니면 서버 주소 지정 */
+const API_BASE = import.meta.env.VITE_API_BASE || "http://3.36.114.249:8080";
+
+/* ----- state 없이 직접 진입했을 때 대비용 더미 ----- */
 const FALLBACK_STORES = {
   goodweather: {
     id: "goodweather",
     name: "카페굿웨더 범계",
     category: "카페/디저트",
-    image: "https://images.unsplash.com/photo-1541167760496-1628856ab772?q=80&w=800",
+    image:
+      "https://images.unsplash.com/photo-1541167760496-1628856ab772?q=80&w=800",
     desc: "로스터리 & 디저트 강점, 감성 브랜딩",
     review: 683,
     address: "경기 안양시 동안구 ○○로 12 3층",
@@ -22,7 +25,8 @@ const FALLBACK_STORES = {
     id: "butterb",
     name: "버터비버 범계본점",
     category: "카페/디저트",
-    image: "https://images.unsplash.com/photo-1511920170033-f8396924c348?q=80&w=800",
+    image:
+      "https://images.unsplash.com/photo-1511920170033-f8396924c348?q=80&w=800",
     desc: "수제 베이커리, 테이크아웃 수요↑",
     review: 992,
     address: "경기 안양시 동안구 △△로 7",
@@ -33,7 +37,8 @@ const FALLBACK_STORES = {
     id: "orosea",
     name: "오르세커피",
     category: "아메리카노·쿠폰",
-    image: "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?q=80&w=800",
+    image:
+      "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?q=80&w=800",
     desc: "싱글오리진 위주, 가성비 메뉴",
     review: 412,
     address: "경기 안양시 동안구 ◇◇길 22",
@@ -42,12 +47,103 @@ const FALLBACK_STORES = {
   },
 };
 
+/* ---------------- 파서: 서버가 주는 '문자열' → 섹션별로 분리 ---------------- */
+
+/** 마크다운 토큰 제거(굵게/기울임 등) */
+function stripMd(s = "") {
+  return s.replace(/\*\*/g, "").replace(/\*/g, "").replace(/_/g, "").trim();
+}
+
+/** 문자열 → { strengths:[], weaknesses:[], summary:"" } */
+function parseAnalysis(text) {
+  if (!text) return { strengths: [], weaknesses: [], summary: "" };
+  const src = text.trim();
+
+  // 섹션 본문 추출 (1) 강점 / (2) 약점 / (3) 한 줄 요약 — 표기 변형 다 허용
+  const P_STR = String.raw`(?:\*\*\s*)?1\s*[.)]?\s*강점\s*:?\s*(?:\*\*)?`;
+  const P_WEA = String.raw`(?:\*\*\s*)?2\s*[.)]?\s*약점\s*:?\s*(?:\*\*)?`;
+  const P_SUM = String.raw`(?:\*\*\s*)?3\s*[.)]?\s*한\s*줄\s*요약\s*:?\s*(?:\*\*)?`;
+
+  const pick = (label, next) => {
+    const re = new RegExp(
+      String.raw`${label}\s*([\s\S]*?)${next ? `(?=${next})` : `$`}`,
+      "i"
+    );
+    const m = src.match(re);
+    return m ? m[1].trim() : "";
+  };
+
+  const strongRaw = pick(P_STR, `${P_WEA}|${P_SUM}`);
+  const weakRaw = pick(P_WEA, `${P_SUM}`);
+  const sumRaw = pick(P_SUM, null);
+
+  const normalizeList = (section) =>
+    section
+      .split(/\r?\n+/)
+      .map((line) =>
+        stripMd(
+          line
+            .replace(/^\s*[-*•]\s*/, "") // 불릿
+            .replace(/^\(\s*추정\s*\)\s*/, "")
+            .replace(/^추정[:：]?\s*/, "")
+            .replace(/^\d+\)\s*/, "")
+            .replace(/^\d+\.\s*/, "")
+            .replace(/^\s*>\s*/, "")
+        )
+      )
+      .filter(Boolean);
+
+  return {
+    strengths: normalizeList(strongRaw),
+    weaknesses: normalizeList(weakRaw),
+    summary: stripMd(sumRaw || ""),
+  };
+}
+
+/* ---------------------------------- UI ---------------------------------- */
+
 export default function StoreDetail() {
   const navigate = useNavigate();
   const { id } = useParams();
   const stateStore = useLocation().state?.store;
-
   const store = stateStore ?? FALLBACK_STORES[id];
+
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [analysis, setAnalysis] = useState({
+    strengths: [],
+    weaknesses: [],
+    summary: "",
+  });
+
+  // 분석 호출 (문자열 응답)
+  useEffect(() => {
+    if (!store) return;
+    setLoading(true);
+    setError("");
+
+    const body = {
+      name: store.name || "",
+      category: store.category || "",
+      address: store.address || "",
+      distanceMeters: 0,
+      highlights: store.desc || "",
+    };
+
+    fetch(`${API_BASE}/api/kakao/analyze-one`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    })
+      .then(async (res) => {
+        const text = await res.text(); // ← 서버가 string을 줌
+        if (!res.ok) throw new Error(text || `HTTP ${res.status}`);
+        return text;
+      })
+      .then((txt) => setAnalysis(parseAnalysis(txt)))
+      .catch((e) => setError(e.message || "분석 중 오류가 발생했어요."))
+      .finally(() => setLoading(false));
+  }, [store]);
 
   if (!store) {
     return (
@@ -72,8 +168,6 @@ export default function StoreDetail() {
 
   return (
     <section className="min-h-screen bg-[#F6F8FB]">
-     
-
       <div className="mx-auto w-full max-w-5xl px-5 py-8">
         <div className="bg-white rounded-3xl border shadow-sm p-6">
           {/* 헤더 */}
@@ -112,35 +206,29 @@ export default function StoreDetail() {
 
           <div className="h-px bg-gray-200 my-6" />
 
-          {/* 경쟁력 분석 요약 (더미) */}
-          <h2 className="text-lg font-semibold">경쟁력 분석 요약</h2>
-          <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="rounded-xl border p-4">
-              <div className="font-semibold text-gray-800 mb-2">🔹 강점</div>
-              <ul className="text-sm text-gray-800 space-y-1 list-disc pl-5">
-                <li>브랜딩/공간 경쟁력</li>
-                <li>디저트 품목 퀄리티</li>
-                <li>회전형 테이크아웃 수요</li>
-              </ul>
+          {/* --------- AI 점포 분석(원문은 절대 렌더링하지 않음!) --------- */}
+          <h2 className="text-lg font-extrabold">AI 점포 분석</h2>
+
+          {loading && (
+            <div className="mt-4 text-sm text-gray-600">분석 중… 잠시만요.</div>
+          )}
+
+          {!!error && (
+            <div className="mt-4 rounded-xl bg-red-50 border border-red-200 p-4 text-sm text-red-700">
+              ❌ {error}
             </div>
-            <div className="rounded-xl border p-4">
-              <div className="font-semibold text-gray-800 mb-2">🔻 약점</div>
-              <ul className="text-sm text-gray-800 space-y-1 list-disc pl-5">
-                <li>접근성 이슈(층고/엘리베이터)</li>
-                <li>주변 경쟁 브랜드 다수</li>
-                <li>가격 포지션 상향</li>
-              </ul>
+          )}
+
+          {!loading && !error && (
+            <div className="mt-4 space-y-4">
+              <CardList title="강점" items={analysis.strengths} />
+              <CardList title="약점" items={analysis.weaknesses} />
+              <SummaryBox text={analysis.summary} />
             </div>
-            <div className="rounded-xl border p-4 bg-amber-50">
-              <div className="font-semibold text-gray-800 mb-2">🤖 요약 코멘트</div>
-              <p className="text-sm text-gray-800">
-                핵심 타깃에 맞춘 공간/메뉴 전략은 강점입니다. 접근성/가격 이슈를 보완하면 재방문율을 더 끌어올릴 수 있어요.
-              </p>
-            </div>
-          </div>
+          )}
 
           {/* CTA */}
-          <div className="mt-6 flex items-center gap-3">
+          <div className="mt-8 flex items-center gap-3">
             <button
               onClick={() => navigate("/similar-stores")}
               className="inline-flex items-center justify-center px-4 h-10 rounded-lg border text-sm hover:bg-gray-50"
@@ -148,7 +236,7 @@ export default function StoreDetail() {
               ← 목록으로
             </button>
             <button
-              onClick={() => alert("시장성 분석 페이지로 이동(나중에 연결)")}
+              onClick={() => navigate("/market-insights")}
               className="inline-flex items-center justify-center px-4 h-10 rounded-lg bg-blue-600 text-white text-sm hover:bg-blue-700"
             >
               시장성 분석 보기
@@ -157,5 +245,44 @@ export default function StoreDetail() {
         </div>
       </div>
     </section>
+  );
+}
+
+/* ----------------------- 작은 컴포넌트 ----------------------- */
+
+function CardList({ title, items = [] }) {
+  // 제목에 따라 색상 테마 결정 (바깥 블럭 배경색으로만 사용)
+  const theme =
+    title === "강점"
+      ? "bg-indigo-50 border-indigo-200 text-indigo-900"
+      : "bg-rose-50 border-rose-200 text-rose-900";
+
+  return (
+    <div className={`rounded-2xl border p-4 ${theme}`}>
+      <div className="text-sm font-semibold mb-2">{title}</div>
+
+      {items.length === 0 ? (
+        <div className="text-sm text-gray-500">아직 항목이 없어요.</div>
+      ) : (
+        <ul className="list-disc pl-5 space-y-1 text-sm">
+          {items.map((t, i) => (
+            <li key={i} className="leading-relaxed">
+              {t}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+function SummaryBox({ text = "" }) {
+  return (
+    <div className="rounded-2xl border p-4 bg-emerald-50 border-emerald-200 text-emerald-900">
+      <div className="text-sm font-semibold mb-2">한 줄 요약</div>
+      <div className="text-sm leading-relaxed">
+        {text || "요약이 비어 있습니다."}
+      </div>
+    </div>
   );
 }
