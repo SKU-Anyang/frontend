@@ -12,26 +12,30 @@ export default function First_Header() {
   const navigate = useNavigate();
 
   return (
-    <header className="absolute top-0 left-0 w-full z-50 border-b border-gray-300 shadow-sm backdrop-blur">
-      <div className="flex items-center justify-between px-20 py-8">
+    <header className="absolute top-0 left-0 w-full z-50 border-b border-gray-300 shadow-sm backdrop-blur-sm">
+      <div className="flex items-center justify-between px-8 py-4">
         {/* 로고 */}
         <div className="shrink-0">
           <Link to="/">
-            <img src="/logo_black.png" alt="로고" className="w-48 h-auto" />
+            <img
+              src="/logo_black.png"
+              alt="로고"
+              className="w-28 h-auto"
+            />
           </Link>
         </div>
 
         {/* 메뉴 */}
-        <nav className="flex-1 mx-16">
-          <ul className="flex items-center justify-around gap-14 font-semibold md:text-2xl">
+        <nav className="flex-1 mx-8">
+          <ul className="flex items-center justify-around gap-6 font-medium text-[13px] text-gray-900">
             {MenuName.map((menu) => (
               <li key={menu.path}>
                 <NavLink
                   to={menu.path}
                   className={({ isActive }) =>
                     isActive
-                      ? "px-2 py-1 font-bold text-black border-b-2 border-black"
-                      : "px-2 py-1 text-gray-600 hover:text-gray-900"
+                      ? "px-1 pb-1 font-semibold text-black border-b border-black"
+                      : "px-1 pb-1 font-medium text-gray-900 hover:text-black hover:font-semibold transition-all"
                   }
                 >
                   {menu.label}
@@ -42,25 +46,23 @@ export default function First_Header() {
         </nav>
 
         {/* 오른쪽 (프로필, 로그인 버튼) */}
-        <div className="flex items-center gap-10 shrink-0">
+        <div className="flex items-center gap-4 shrink-0">
           <Link to="/mypage" aria-label="마이페이지">
             <img
               src="/Profile.png"
               alt="프로필"
-              className="w-14 h-14 rounded-full"
+              className="w-8 h-8 rounded-full"
             />
           </Link>
-          <button
-            onClick={() => navigate("/login")}
-            className="rounded-full bg-[#7895CB] px-8 py-4 text-xl font-bold text-white shadow-lg hover:opacity-95 active:translate-y-[1px]"
-          >
-            LOGIN
-          </button>
+        <button
+          onClick={() => navigate("/login")}
+          className="rounded-xl bg-[#7895CB] px-5 py-1.5 text-[13px] font-medium text-white shadow-md hover:opacity-95 active:translate-y-[1px] transition"
+        >
+          LOGIN
+        </button>
+
         </div>
       </div>
-
-      {/* 하단선 */}
-      <div className="w-full h-px bg-gray-300" />
     </header>
   );
 }
