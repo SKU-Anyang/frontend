@@ -5,9 +5,10 @@ import First_Header from "./assets/components/First_Header.jsx";
 import Header from "./assets/components/Header.jsx";
 import Footer from "./assets/components/Footer.jsx";
 
+// 페이지 (src/pages 폴더)
 import FirstScreen from "./pages/FirstScreen.jsx";
-import SignUp from "./pages/SignUp.jsx";
 import Login from "./pages/Login.jsx";
+import SignUp from "./pages/SignUp.jsx";
 import MyPage from "./pages/MyPage.jsx";
 import InfoEdit from "./pages/InfoEdit.jsx";
 
@@ -26,16 +27,18 @@ export default function App() {
   const isHome = pathname === "/";
 
   return (
-    <div className="min-h-screen flex flex-col bg-white">
-      {/* 홈이면 First_Header, 아니면 공통 Header */}
-      {isHome ? <First_Header /> : <Header />}
+    <div className="min-h-screen flex flex-col ">
+      {/* 상단 공용 헤더 */}
+            {isHome ? <First_Header /> : <Header />}
 
-      {/* 헤더 높이만큼 여백을 줘서 본문이 안 가려지도록 함 */}
+
+      {/* 본문 */}
       <main className="flex-1">
         <Routes>
+          {/* 랜딩/기본 페이지들 */}
           <Route path="/" element={<FirstScreen />} />
-          <Route path="/signup" element={<SignUp />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<SignUp />} />
           <Route path="/mypage" element={<MyPage />} />
           <Route path="/infoedit" element={<InfoEdit />} />
 
@@ -53,13 +56,12 @@ export default function App() {
           <Route path="/b2b-helper" element={<B2BHelper />} />
           <Route path="/similar-stores" element={<SimilarStores />} />
           <Route path="/similar-stores/:id" element={<StoreDetail />} />
+          <Route path="/main-section" element={<MainSection />} />
           <Route path="/curation" element={<UserCuration />} />
-
-          {/* 없는 경로 → 홈 */}
-          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
 
+      {/* 하단 공용 푸터 */}
       <Footer />
     </div>
   );
