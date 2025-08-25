@@ -1,18 +1,31 @@
+// src/pages/SignUp.jsx
 import { useState } from "react";
+import axios from "axios";
 
 export default function SignUp() {
-  const [form, setForm] = useState({ id: "", pw: "", pw2: "", email: "", phone: "" });
+  const [form, setForm] = useState({
+    userId: "",
+    password: "",
+    passwordConfirm: "",
+    email: "",
+    nickname: "",
+    region: "",
+    interest: "",
+  });
+
   const [agree, setAgree] = useState({ all: false, t1: false, t2: false });
+  const [loading, setLoading] = useState(false);
 
-  const isValid =
-    form.id && form.pw && form.pw2 && form.email && form.phone &&
-    form.pw === form.pw2 && agree.t1 && agree.t2;
+  // 입력 변경
+  const onChange = (key) => (e) =>
+    setForm((prev) => ({ ...prev, [key]: e.target.value }));
 
-  const onChange = (key) => (e) => setForm((prev) => ({ ...prev, [key]: e.target.value }));
+  // 전체동의 / 개별동의
   const toggleAll = () => {
     const next = !agree.all;
     setAgree({ all: next, t1: next, t2: next });
   };
+
   const toggleOne = (key) => () =>
     setAgree((prev) => {
       const next = { ...prev, [key]: !prev[key] };
@@ -20,18 +33,64 @@ export default function SignUp() {
       return next;
     });
 
-  const onSubmit = (e) => {
+  // ✅ onSubmit: 응답 코드/메시지로 성공/실패 판정 (프록시 X, 직접 호출)
+  const onSubmit = async (e) => {
     e.preventDefault();
-    if (!isValid) return;
-    alert("회원가입 가능합니다! (API 연동 시 처리)");
+    if (loading) return;
+    setLoading(true);
+
+    try {
+      const body = {
+        userId: form.userId.trim(),
+        email: form.email.trim(),
+        password: form.password,
+        passwordConfirm: form.passwordConfirm,
+        nickname: form.nickname.trim(),
+        region: form.region.trim(),
+        interest: form.interest.trim(),
+      };
+
+      console.log("📦 [onSubmit] 전송 데이터:", body);
+
+      const res = await axios.post(
+        "http://3.36.114.249:8080/api/auth/signup",
+        body,
+        {
+          headers: { "Content-Type": "application/json" },
+          // 응답이 오기만 하면 여기서 처리 (400/409/422 등 실패도 catch로 안 감)
+          validateStatus: (s) => s >= 200 && s < 500,
+          timeout: 10000,
+        }
+      );
+
+      console.log("📡 status:", res.status, "data:", res.data);
+
+      if (res.status === 200 || res.status === 201) {
+        alert(res.data?.message ?? "회원가입 성공!");
+        console.log("✅ 성공:", res.data);
+        // 필요하면 이동: navigate("/login")
+      } else {
+        alert(res.data?.message ?? `회원가입 실패 (HTTP ${res.status})`);
+        console.warn("⚠️ 실패:", res.data);
+      }
+    } catch (error) {
+      console.error("❌ 네트워크/환경 오류:", error);
+      if (error.message?.includes("timeout")) {
+        alert("요청 시간이 초과되었습니다.");
+      } else {
+        alert("서버 연결 오류: " + error.message);
+      }
+    } finally {
+      setLoading(false);
+      console.log("🔚 finally");
+    }
   };
 
   return (
     <main className="bg-[#B0BBCA] min-h-screen flex items-start justify-center px-3 pb-10 pt-24">
-      {/* 흰 박스 */}
       <div className="w-full max-w-[520px] mt-4">
         <div className="bg-white rounded-2xl shadow-md px-6 py-8">
-          {/* 제목 + 이미지 */}
+          {/* 타이틀 */}
           <div className="flex items-center gap-2 mb-6">
             <h1 className="text-[22px] md:text-[26px] font-extrabold text-gray-900">
               회원가입
@@ -43,17 +102,17 @@ export default function SignUp() {
             />
           </div>
 
-
-          {/* 기본정보 */}
+          {/* 폼 */}
           <section>
             <p className="text-[12px] font-semibold text-gray-900">기본정보</p>
 
-            <form onSubmit={onSubmit} className="mt-4 space-y-3.5">
+            <form onSubmit={onSubmit} className="mt-4 space-y-3.5" autoComplete="off">
               <LabeledInput label="아이디">
                 <input
                   type="text"
-                  value={form.id}
-                  onChange={onChange("id")}
+                  value={form.userId}
+                  onChange={onChange("userId")}
+                  autoComplete="username"
                   className="w-full h-7 rounded border border-gray-300 px-2 text-[11px] outline-none focus:ring-1 focus:ring-blue-400"
                 />
               </LabeledInput>
@@ -61,8 +120,9 @@ export default function SignUp() {
               <LabeledInput label="비밀번호">
                 <input
                   type="password"
-                  value={form.pw}
-                  onChange={onChange("pw")}
+                  value={form.password}
+                  onChange={onChange("password")}
+                  autoComplete="new-password"
                   className="w-full h-7 rounded border border-gray-300 px-2 text-[11px] outline-none focus:ring-1 focus:ring-blue-400"
                 />
               </LabeledInput>
@@ -70,8 +130,9 @@ export default function SignUp() {
               <LabeledInput label="비밀번호 확인">
                 <input
                   type="password"
-                  value={form.pw2}
-                  onChange={onChange("pw2")}
+                  value={form.passwordConfirm}
+                  onChange={onChange("passwordConfirm")}
+                  autoComplete="new-password"
                   className="w-full h-7 rounded border border-gray-300 px-2 text-[11px] outline-none focus:ring-1 focus:ring-blue-400"
                 />
               </LabeledInput>
@@ -81,15 +142,37 @@ export default function SignUp() {
                   type="email"
                   value={form.email}
                   onChange={onChange("email")}
+                  autoComplete="email"
                   className="w-full h-7 rounded border border-gray-300 px-2 text-[11px] outline-none focus:ring-1 focus:ring-blue-400"
                 />
               </LabeledInput>
 
-              <LabeledInput label="연락처">
+              <LabeledInput label="닉네임">
                 <input
                   type="text"
-                  value={form.phone}
-                  onChange={onChange("phone")}
+                  value={form.nickname}
+                  onChange={onChange("nickname")}
+                  autoComplete="nickname"
+                  className="w-full h-7 rounded border border-gray-300 px-2 text-[11px] outline-none focus:ring-1 focus:ring-blue-400"
+                />
+              </LabeledInput>
+
+              <LabeledInput label="지역">
+                <input
+                  type="text"
+                  value={form.region}
+                  onChange={onChange("region")}
+                  autoComplete="address-level1"
+                  className="w-full h-7 rounded border border-gray-300 px-2 text-[11px] outline-none focus:ring-1 focus:ring-blue-400"
+                />
+              </LabeledInput>
+
+              <LabeledInput label="관심사">
+                <input
+                  type="text"
+                  value={form.interest}
+                  onChange={onChange("interest")}
+                  autoComplete="off"
                   className="w-full h-7 rounded border border-gray-300 px-2 text-[11px] outline-none focus:ring-1 focus:ring-blue-400"
                 />
               </LabeledInput>
@@ -98,7 +181,6 @@ export default function SignUp() {
               <div className="pt-2">
                 <p className="text-[12px] font-semibold text-gray-900 mb-2">약관 동의</p>
 
-                {/* 전체 약관 */}
                 <label className="flex items-center gap-2 text-[11px] font-medium">
                   <input
                     type="checkbox"
@@ -111,7 +193,6 @@ export default function SignUp() {
 
                 <div className="w-full h-px bg-gray-300 my-2" />
 
-                {/* 필수 약관 */}
                 <div className="space-y-2.5">
                   <div className="flex items-center justify-between">
                     <label className="flex items-center gap-2 text-[11px] font-medium">
@@ -153,16 +234,14 @@ export default function SignUp() {
                 </div>
               </div>
 
-              {/* 회원가입 버튼 */}
               <button
                 type="submit"
-                disabled={!isValid}
-                className={
-                  "w-full h-9 rounded-md text-white font-semibold text-[12px] transition " +
-                  (isValid ? "bg-[#2563eb] hover:opacity-90" : "bg-gray-300 cursor-not-allowed")
-                }
+                disabled={loading}
+                className={`w-full h-9 rounded-md text-white font-semibold text-[12px] transition ${
+                  loading ? "bg-[#2563eb]/60 cursor-not-allowed" : "bg-[#2563eb] hover:opacity-90"
+                }`}
               >
-                회원가입
+                {loading ? "처리 중..." : "회원가입"}
               </button>
             </form>
           </section>
@@ -172,7 +251,7 @@ export default function SignUp() {
   );
 }
 
-/* 라벨 + 인풋 묶음 */
+// 라벨 + 인풋 묶음
 function LabeledInput({ label, children }) {
   return (
     <div className="grid grid-cols-[70px_1fr] items-center gap-2.5">

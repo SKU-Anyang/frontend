@@ -1,19 +1,47 @@
 import { useState } from "react";
+import axios from "axios";
 
 export default function Login() {
-  const [idOrEmail, setIdOrEmail] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [keep, setKeep] = useState(true);
 
-  const isValid = idOrEmail.trim() && password.trim();
+  const isValid = email.trim() && password.trim();
 
-  const onSubmit = (e) => {
+  const onSubmit = async (e) => {
     e.preventDefault();
     if (!isValid) {
-      alert("아이디/이메일과 비밀번호를 입력해주세요.");
+      alert("이메일과 비밀번호를 입력해주세요.");
       return;
     }
-    alert("로그인 시도! (API 연동 시 처리)");
+
+    try {
+      console.log(email, password)
+      const response = await axios.post(
+        "http://3.36.114.249:8080/api/auth/login",
+        {
+          userId: email,
+          password: password,
+        }
+      );
+
+      console.log("로그인 성공:", response.data);
+
+      // 서버에서 토큰 받아오면 localStorage에 저장
+      if (response.data.token) {
+        localStorage.setItem("token", response.data.token);
+      }
+
+      // 로그인 상태 유지 체크
+      if (keep) {
+        localStorage.setItem("keepLogin", "true");
+      }
+
+      alert("로그인 성공!");
+    } catch (error) {
+      console.error("로그인 실패:", error.response?.data || error.message);
+      alert(error.response?.data?.message || "로그인 실패. 이메일/비밀번호를 확인하세요.");
+    }
   };
 
   return (
@@ -21,8 +49,6 @@ export default function Login() {
       {/* 흰 박스 */}
       <div className="w-full max-w-[520px] mt-12">
         <div className="bg-white rounded-2xl shadow-md px-10 pt-8 pb-14 min-h-[400px]">
-          {/* ↑ 세로 길이 줄임: pb-20 → pb-14, min-h-[480px] → min-h-[400px] */}
-
           {/* 로그인+이미지 */}
           <div className="flex items-center gap-2 mb-6">
             <h1 className="text-[22px] font-extrabold text-gray-900 leading-none">
@@ -31,19 +57,19 @@ export default function Login() {
             <img
               src="/login.png"
               alt="로그인"
-              className="w-20 h-20 -ml-1" // 이미지 크게
+              className="w-20 h-20 -ml-1"
             />
           </div>
 
           {/* 폼 */}
           <form onSubmit={onSubmit} className="space-y-5">
-            {/* 이메일주소, 아이디 */}
+            {/* 이메일 */}
             <div>
               <input
                 type="text"
-                value={idOrEmail}
-                onChange={(e) => setIdOrEmail(e.target.value)}
-                placeholder="이메일 주소 또는 아이디"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="이메일"
                 className="w-full h-[42px] rounded-lg border border-gray-300 px-4 text-sm
                            outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
               />
@@ -60,7 +86,6 @@ export default function Login() {
                            outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
               />
 
-              {/* 줄 맞춤 */}
               <div className="mt-2 flex items-center justify-between">
                 {/* 로그인 상태 유지 */}
                 <label className="flex items-center gap-1 text-xs text-gray-800">
@@ -73,7 +98,7 @@ export default function Login() {
                   로그인 상태 유지
                 </label>
 
-                {/* 아이디|비밀번호 찾기 */}
+                {/* 아이디/비밀번호 찾기 */}
                 <div className="text-[9px] text-black">
                   <button type="button" className="hover:underline">
                     아이디 찾기
