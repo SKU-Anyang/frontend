@@ -19,7 +19,7 @@ export default function Login() {
       const response = await axios.post(
         "http://3.36.114.249:8080/api/auth/login",
         {
-          email: email,
+          userId: email,
           password: password,
         }
       );
@@ -65,7 +65,7 @@ export default function Login() {
             {/* 이메일 */}
             <div>
               <input
-                type="email"
+                type="text"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="이메일"
