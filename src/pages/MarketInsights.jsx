@@ -10,6 +10,29 @@ import {
 /* -------------------- 공통 -------------------- */
 const API_BASE = (import.meta.env.VITE_API_BASE || "http://3.36.114.249:8080").replace(/\/$/, "");
 
+/* axios 토큰 자동 첨부(중복 방지) */
+if (!window.__authInterceptorAdded) {
+  axios.interceptors.request.use((config) => {
+    const keep = localStorage.getItem("keepLogin") === "true";
+    const storage = keep ? window.localStorage : window.sessionStorage;
+
+    const raw =
+      storage.getItem("accessToken") ||
+      window.localStorage.getItem("accessToken") ||
+      window.sessionStorage.getItem("accessToken") ||
+      "";
+
+    const token = raw?.startsWith("Bearer ") ? raw : (raw ? `Bearer ${raw}` : "");
+
+    if (token) {
+      config.headers = config.headers || {};
+      config.headers.Authorization = token;     // ← 모든 요청에 자동으로 토큰 첨부
+      config.headers.Accept = config.headers.Accept || "application/json";
+    }
+    return config;
+  });
+  window.__authInterceptorAdded = true;
+}
 /* Kakao SDK 로더 (지오코딩/리버스지오코딩) */
 function loadKakaoSdk(appKey) {
   return new Promise((resolve, reject) => {
@@ -20,11 +43,8 @@ function loadKakaoSdk(appKey) {
     s.src = url;
     s.async = true;
     s.onload = () => {
-      try {
-        window.kakao.maps.load(() => resolve(window.kakao));
-      } catch {
-        reject(new Error("kakao.maps.load 실패 — JS키/도메인/제품 활성화 확인"));
-      }
+      try { window.kakao.maps.load(() => resolve(window.kakao)); }
+      catch { reject(new Error("kakao.maps.load 실패 — JS키/도메인/제품 활성화 확인")); }
     };
     s.onerror = () => reject(new Error(`Kakao SDK load failed: ${url}`));
     document.head.appendChild(s);
@@ -73,6 +93,18 @@ const PRIMARY_BAR = "#4B74FF";
 /* 도넛 폐업률(서버에 보낼 값) */
 const BOOKMARK_CLOSE_RATE = 18;
 
+/* 로그인 토큰 가져오기(keepLogin 플래그 반영) */
+function getAccessToken() {
+  const keep = localStorage.getItem("keepLogin") === "true";
+  const primary = keep ? localStorage : sessionStorage;
+  return (
+    primary.getItem("accessToken") ||
+    localStorage.getItem("accessToken") ||
+    sessionStorage.getItem("accessToken") ||
+    ""
+  );
+}
+
 /* -------------------- 페이지 -------------------- */
 export default function MarketInsights() {
   const q = useQuery();
@@ -95,7 +127,6 @@ export default function MarketInsights() {
   const queryLng = parseFloat(q.get("lng"));
 
   /* ---------- 차트 데이터 상태 (초기 더미) ---------- */
-  // 라인: 유동 인구
   const [flowLine, setFlowLine] = useState([
     { time: "06-09", 전체: 1200, 남성: 700, 여성: 500, 타겟층: 400 },
     { time: "09-12", 전체: 2200, 남성: 1300, 여성: 900, 타겟층: 800 },
@@ -105,7 +136,6 @@ export default function MarketInsights() {
     { time: "21-24", 전체: 3600, 남성: 2000, 여성: 1600, 타겟층: 900 },
   ]);
 
-  // 바: 유사 업종 수
   const [compBars, setCompBars] = useState([
     { name: "감성 카페", 값: 120 },
     { name: "디저트 카페", 값: 85 },
@@ -113,7 +143,6 @@ export default function MarketInsights() {
     { name: "테마 카페", 값: 40 },
   ]);
 
-  // 파이: 연령대 비율
   const [agePie, setAgePie] = useState([
     { name: "10대", value: 9.8 },
     { name: "20대", value: 26.7 },
@@ -127,12 +156,12 @@ export default function MarketInsights() {
   const [bookmarkLoading, setBookmarkLoading] = useState(false);
   const [bookmarkErr, setBookmarkErr] = useState("");
 
-  // 상권 안정성 슬라이드: 0=도넛, 1=막대
+  // 상권 안정성 슬라이드
   const [slideIdx, setSlideIdx] = useState(0);
   const prev = () => setSlideIdx((i) => (i - 1 + 2) % 2);
   const next = () => setSlideIdx((i) => (i + 1) % 2);
 
-  /* ---------- 좌표 & admCd 얻기 → API 호출 ---------- */
+  /* ---------- 좌표 & API 호출 ---------- */
   useEffect(() => {
     (async () => {
       let lat = Number.isFinite(queryLat) ? queryLat : undefined;
@@ -140,8 +169,6 @@ export default function MarketInsights() {
 
       try {
         const kakao = await loadKakaoSdk(kakaoKey);
-
-        // 1) 키워드로 중심 좌표
         if (!(Number.isFinite(lat) && Number.isFinite(lng))) {
           const ps = new kakao.maps.services.Places();
           await new Promise((resolve) => {
@@ -171,16 +198,14 @@ export default function MarketInsights() {
   /* ---------- API 호출 묶음 ---------- */
   async function fetchAll({ lat, lng }) {
     try {
-      /* 1) 연령대 비율: 최근 12개월 역탐색 */
+      // 1) 연령대 비율: 최근 12개월 역탐색
       let agePicked = null;
       for (let i = 0; i < 12; i++) {
         const d = new Date();
         d.setMonth(d.getMonth() - i);
         const yyyymm = yyyymmFrom(d);
         try {
-          const res = await axios.get(`${API_BASE}/api/insights/age-share`, {
-            params: { yyyymm, lat, lng },
-          });
+          const res = await axios.get(`${API_BASE}/api/insights/age-share`, { params: { yyyymm, lat, lng } });
           const rows = Array.isArray(res.data) ? res.data : [];
           if (rows.length) { agePicked = rows; break; }
         } catch {}
@@ -210,7 +235,7 @@ export default function MarketInsights() {
         if (parsed.length) setAgePie(parsed);
       }
 
-      /* 2) 유사 업종 수 */
+      // 2) 유사 업종 수
       const compRes = await axios.get(`${API_BASE}/api/insights/competitors`, {
         params: { lat, lng, radius: 800 },
       });
@@ -222,20 +247,16 @@ export default function MarketInsights() {
         .slice(0, 8);
       if (bars.length) setCompBars(bars);
 
-      /* 3) 유동 인구 흐름: 최근 14일 역탐색 */
+      // 3) 유동 인구 흐름: 최근 14일 역탐색
       let flowPicked = null;
       let ymd8 = DEFAULT_YMD8;
       for (let i = 0; i < 14; i++) {
-        // yyyy-mm-dd 로 바꿔서 요청
         const date = `${ymd8.slice(0,4)}-${ymd8.slice(4,6)}-${ymd8.slice(6,8)}`;
         try {
-          const res = await axios.get(`${API_BASE}/api/insights/living-pop`, {
-            params: { date, lat, lng },
-          });
+          const res = await axios.get(`${API_BASE}/api/insights/living-pop`, { params: { date, lat, lng } });
           const rows = Array.isArray(res.data) ? res.data : [];
           if (rows.length) { flowPicked = rows; break; }
         } catch {}
-        // 하루 롤백
         const d = new Date(Number(ymd8.slice(0,4)), Number(ymd8.slice(4,6)) - 1, Number(ymd8.slice(6,8)));
         d.setDate(d.getDate() - 1);
         ymd8 = `${d.getFullYear()}${pad2(d.getMonth() + 1)}${pad2(d.getDate())}`;
@@ -255,44 +276,67 @@ export default function MarketInsights() {
     }
   }
 
-  /* ---------- 북마크 API ---------- */
-  const handleBookmark = async () => {
-    if (bookmarkLoading) return;
-    setBookmarkLoading(true);
-    setBookmarkErr("");
-    try {
-      const payload = {
-        ideaId: ideaIdFromState,                          // number
-        title: itemName,                                  // string
-        summary: `지역: ${region} / 업종: ${category}`,    // string
-        industry: category,                               // string
-        region,                                           // string
-        contentJson: JSON.stringify({
-          region,
-          category,
-          tags,
-          charts: { agePie, compBars, flowLine },
-        }),                                               // string(JSON)
-        closureYear: new Date().getFullYear(),           // number
-        closureRate: BOOKMARK_CLOSE_RATE,                // number
-      };
+  /* ---------- 북마크 API (토큰 필요) ---------- */
+ /* ---------- 북마크 API (토큰 필요) ---------- */
+const handleBookmark = async () => {
+  if (bookmarkLoading) return;
 
-      const { data } = await axios.post(`${API_BASE}/api/bookmarks`, payload, {
-        headers: { "Content-Type": "application/json" },
-      });
+  // 토큰 존재만 체크(없어도 페이지 이동 안 함)
+  const keep = localStorage.getItem("keepLogin") === "true";
+  const storage = keep ? window.localStorage : window.sessionStorage;
+  const hasToken =
+    storage.getItem("accessToken") ||
+    window.localStorage.getItem("accessToken") ||
+    window.sessionStorage.getItem("accessToken");
 
-      // 기대 응답: { ideaId: number, created: boolean }
-      if (data?.created === true) {
-        setBookmarked(true);
-      } else {
-        setBookmarkErr("저장은 되었지만 응답 형식이 예상과 다릅니다.");
-      }
-    } catch (e) {
-      setBookmarkErr(e?.response?.data?.message || e?.message || "북마크 저장 실패");
-    } finally {
-      setBookmarkLoading(false);
+  if (!hasToken) {
+    setBookmarkErr("로그인이 필요합니다. 상단 로그인 버튼으로 먼저 로그인해주세요.");
+    return;
+  }
+
+  setBookmarkLoading(true);
+  setBookmarkErr("");
+
+  try {
+    // const payload = {
+    //   ideaId: ideaIdFromState,
+    //   title: itemName,
+    //   summary: `지역: ${region} / 업종: ${category}`,
+    //   industry: category,
+    //   region,
+    //   contentJson: JSON.stringify({
+    //     region,
+    //     category,
+    //     tags,
+    //     charts: { agePie, compBars, flowLine },
+    //   }),
+    //   closureYear: new Date().getFullYear(),
+    //   closureRate: BOOKMARK_CLOSE_RATE,
+    // };
+
+    // 인터셉터가 Authorization을 자동 첨부하므로 여기선 Content-Type만 지정
+    const { data } = await axios.post(`${API_BASE}/api/bookmarks/${ideaIdFromState}`, {
+      headers: { "Content-Type": "application/json" },
+    });
+
+    if (data?.created === true) {
+      setBookmarked(true);
+    } else {
+      setBookmarkErr("저장은 시도됐지만 응답 형식이 예상과 달라요.");
     }
-  };
+  } catch (e) {
+    const status = e?.response?.status;
+    if (status === 401 || status === 403) {
+      // ⛔ 여기서도 절대 로그인 페이지로 이동하지 않음
+      setBookmarkErr("인증에 실패했습니다. 로그인 상태를 다시 확인해주세요.");
+    } else {
+      setBookmarkErr(e?.response?.data?.message || e?.message || "북마크 저장 실패");
+    }
+  } finally {
+    setBookmarkLoading(false);
+  }
+};
+
 
   /* ---------- UI ---------- */
   const summaryText =
@@ -301,7 +345,7 @@ export default function MarketInsights() {
 
   return (
     <section className="min-h-screen bg-[#F6F8FB]">
-      <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 py-8 sm:py-10">
+      <div className="mx-auto w/full max-w-6xl px-4 sm:px-6 py-8 sm:py-10">
         {/* 헤더 */}
         <header className="bg-white rounded-3xl border border-gray-200/70 shadow-sm p-6 sm:p-8">
           <h1 className="text-[26px] sm:text-[30px] font-extrabold tracking-tight text-gray-900">
@@ -337,9 +381,7 @@ export default function MarketInsights() {
             </button>
           </div>
 
-          {bookmarkErr && (
-            <div className="mt-2 text-xs text-rose-600">{bookmarkErr}</div>
-          )}
+          {bookmarkErr && <div className="mt-2 text-xs text-rose-600">{bookmarkErr}</div>}
 
           {/* 요약 평가 */}
           <div className="mt-6 sm:mt-7">
@@ -448,30 +490,15 @@ export default function MarketInsights() {
                 </span>
               </div>
 
-              <button
-                onClick={prev}
-                className="hidden sm:flex absolute left-3 top-1/2 -translate-y-1/2 h-9 w-9 rounded-full border bg-white items-center justify-center text-gray-700 hover:bg-gray-50"
-                aria-label="prev"
-              >
-                ‹
-              </button>
-              <button
-                onClick={next}
-                className="hidden sm:flex absolute right-3 top-1/2 -translate-y-1/2 h-9 w-9 rounded-full border bg-white items-center justify-center text-gray-700 hover:bg-gray-50"
-                aria-label="next"
-              >
-                ›
-              </button>
+              <button onClick={prev} className="hidden sm:flex absolute left-3 top-1/2 -translate-y-1/2 h-9 w-9 rounded-full border bg-white items-center justify-center text-gray-700 hover:bg-gray-50" aria-label="prev">‹</button>
+              <button onClick={next} className="hidden sm:flex absolute right-3 top-1/2 -translate-y-1/2 h-9 w-9 rounded-full border bg-white items-center justify-center text-gray-700 hover:bg-gray-50" aria-label="next">›</button>
 
               <div className="mt-3 sm:mt-4 h-64 sm:h-72">
                 <ResponsiveContainer width="100%" height="100%">
                   {slideIdx === 0 ? (
                     <PieChart>
                       <Pie
-                        data={[
-                          { name: "유지율", value: 82 },
-                          { name: "폐업률", value: BOOKMARK_CLOSE_RATE },
-                        ]}
+                        data={[{ name: "유지율", value: 82 }, { name: "폐업률", value: BOOKMARK_CLOSE_RATE }]}
                         dataKey="value"
                         nameKey="name"
                         cx="50%"
@@ -512,16 +539,14 @@ export default function MarketInsights() {
 
               <div className="mt-4 flex items-center justify-center w-full">
                 <div className="h-1.5 w-64 bg-gray-300 rounded-full relative overflow-hidden">
-                  <div
-                    className="absolute top-0 left-0 h-full bg-gray-600 rounded-full transition-all"
-                    style={{ width: slideIdx === 0 ? "50%" : "100%" }}
-                  />
+                  <div className="absolute top-0 left-0 h-full bg-gray-600 rounded-full transition-all" style={{ width: slideIdx === 0 ? "50%" : "100%" }} />
                 </div>
               </div>
             </div>
           </div>
         </section>
 
+        {/* 코멘트 */}
         <section className="mt-8">
           <div className="rounded-3xl bg-[#2F66F5] text-white p-5 sm:p-6 shadow-sm">
             <div className="text-sm opacity-90">🤖 분석 결과 코멘트</div>
