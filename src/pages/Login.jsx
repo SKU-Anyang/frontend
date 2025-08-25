@@ -16,6 +16,7 @@ export default function Login() {
     }
 
     try {
+      console.log(email, password)
       const response = await axios.post(
         "http://3.36.114.249:8080/api/auth/login",
         {
