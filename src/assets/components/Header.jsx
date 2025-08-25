@@ -1,11 +1,11 @@
 import { NavLink, Link, useNavigate } from "react-router-dom";
 
 const MenuName = [
-  { label: "아이디어/시장성 진단", path: "/idea" },
-  { label: "비즈니스 설계/리스크 진단", path: "/business" },
-  { label: "유사 점포 분석", path: "/analysis" },
-  { label: "사장님 B2B 도우미", path: "/b2b" },
-  { label: "사용자 큐레이션", path: "/curation" },
+  { label: "아이디어/시장성 진단", path: "/IdeaRecommend" },
+  { label: "비즈니스 설계/리스크 진단", path: "/BusinessDesignRisk" },
+  { label: "유사 점포 분석", path: "/SimilarStores" },
+  { label: "사장님 B2B 도우미", path: "/B2BHelper" },
+  { label: "사용자 큐레이션", path: "/UserCuration" },
 ];
 
 export default function Header() {
